@@ -11,10 +11,12 @@
   "dependencies": {
     "@rainbow-me/rainbowkit": "^0.8.1",
     "ethers": "^5.0.0",
+    "framer-motion": "^8.5.5",
     "next": "^12.1.6",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-hydration-provider": "^1.0.2",
+    "styled-components": "^5.3.6",
     "wagmi": "^0.9.0"
   },
   "devDependencies": {
