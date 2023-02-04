@@ -12,7 +12,7 @@ export default function MainPage(): JSX.Element {
   const [AllBets, setAllBet] = useState(0)
   const [availableBets, setavailableBet] = useState(0)
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0xBB371B3eA0B0cefC4C8F60BfC679F94C2933F737"
+  const ContractAddress = "0xAB206d594ae3fE15674e2Fa4Bb4dfe9316Fce822"
 
 
   const contractConfig = {
@@ -41,6 +41,7 @@ export default function MainPage(): JSX.Element {
 	}, []);
 
   useEffect(() => {
+    console.log(AvailableBets.toNumber())
 		setavailableBet(AvailableBets.toNumber())
 	}, []);
 

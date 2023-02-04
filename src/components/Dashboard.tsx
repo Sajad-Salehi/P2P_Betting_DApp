@@ -6,53 +6,78 @@ import { useState, useEffect } from 'react';
 const {abi} = require('../abi.json')
 
 
-export default function Dashboard(): JSX.Element {
+export default function BetList() {
 
-    const [isClicked, setClicked] = useState(false)
+  const [bets, setBets] = useState([]);
+  const ContractAddress = "0xAB206d594ae3fE15674e2Fa4Bb4dfe9316Fce822"
 
 
-    function hi() {
-        setClicked(true)
-    }
+  const contractConfig = {
+    address: ContractAddress,
+    abi: abi,
+  }
 
-    return(
-        
-        
-        <div className={styles.dashboard}>
+  const { data: AvailableBets } = useContractRead({
+    ...contractConfig,
+    functionName: 'getAvailableBets',
+    watch: true,
+    chainId: 80001,
+  });
 
-            <h1 className={styles.dsh1}>Aryan Bet Dashboard</h1>
-            <div><ConnectButton /></div>
-
-            <main className={styles.main}>
-            
+  useEffect(() => {
     
-              <a onClick={hi} className={styles.card}>
-                <h2>See Available Bets Info &rarr;</h2>
-                <h4>
-                  See open bets and accept one to start.
-                </h4>
-              </a>
-    
-    
-              <a className={styles.card}>
-                <h2>Publish Your Bet &rarr;</h2>
-                <h4>
-                  Publish and Open Your Specific Bet.
-                </h4>
-              </a>
+    setBets(AvailableBets)
+  }, []);
 
 
-              <a className={styles.card}>
-                <h2>See Your Current Bet &rarr;</h2>
-                <h4>
-                  See your Current bets info.
-                </h4>
-              </a>
+  function AcceptBetForm() {
+    const [betId, setBetId] = useState('')
   
-          
-          </main>
-        </div>
+    const handleAcceptBet = () => {
+      // TODO: Call the acceptBet method on the betting smart contract with the betId
+    }
+  }
 
-      
-    );
-}
+
+  return (
+
+    <div className={styles.tablePage} >
+      <h2>Bet List</h2>
+      <table className={styles.table}>
+        <thead className={styles.thead}>
+          <tr>
+            <th className={styles.th}>Bet ID</th>
+            <th className={styles.th}>Game Id</th>
+            <th className={styles.th}>Price</th>
+            <th className={styles.th}>Condition</th>
+          </tr>
+        </thead>
+        <tbody className={styles.tbody}>
+          {bets.map((bet) => (
+            <tr key={bet.id}>
+
+              <td className={styles.th}>{bet.id.toNumber()}</td>
+              <td className={styles.th}>{bet.gameId.toNumber()}</td>
+              <td className={styles.th}>{bet.price.toNumber()}</td>
+              <td className={styles.th}>{bet.conditions.toNumber()}</td>
+
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div>
+        <h3>Enter the Bet Id to accept</h3>
+        <input
+        type="text"
+        value=''
+        onChange={e => setBetId(e.target.value)}
+        placeholder="Enter bet ID"
+      />
+      <button onClick={AcceptBetForm}>Accept bet</button>
+      </div>
+    </div>
+
+  );
+};
+
