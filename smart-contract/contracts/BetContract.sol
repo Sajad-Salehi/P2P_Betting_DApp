@@ -8,27 +8,34 @@ import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 contract BetContract is ChainlinkClient {
 
     
-    using Chainlink for Chainlink.Request;
- 
-    uint256 public number1;
-    uint256 public number2;
+    uint256 number1;
+    uint256 number2;
+    uint256 currentGameId;        
+    uint256 betCounter = 0;
+
     bytes32 private externalJobId;
     uint256 private oraclePayment;
-    
+    using Chainlink for Chainlink.Request;
 
-    uint256 betCounter = 0;
     mapping (uint => Bet) public bets;
-    event RequestFulfilled(bytes32 indexed requestId, uint256 number1, uint256 number2);
+    mapping (address => Bet) public AddressToBet;
+
+
+    event RequestFulfilled(
+        bytes32 indexed requestId, 
+        uint256 number1, 
+        uint256 number2
+    );
 
 
     struct Bet {
 
         uint id;
+        uint gameId;
+        uint conditions;
+        uint price;
         address challenger;
         address accepter;
-        string name;
-        uint conditions;
-        uint256 price;
         address winner;
         bool isAlive;
         bool isAccepted;
@@ -39,7 +46,6 @@ contract BetContract is ChainlinkClient {
 
         uint indexed _id,
         address indexed _challenger,
-        string _name,
         uint256 indexed _price
     ); 
 
@@ -48,7 +54,6 @@ contract BetContract is ChainlinkClient {
         uint indexed _id,
         address indexed _challenger,
         address indexed _accepter,
-        string _name,
         uint256  _price
     );
 
@@ -57,7 +62,6 @@ contract BetContract is ChainlinkClient {
         uint indexed _id,
         address indexed _challenger,
         address indexed _accepter,
-        string _name,
         uint256 _payout
     );
 
@@ -83,6 +87,7 @@ contract BetContract is ChainlinkClient {
         req.add("path1", "0,Name");
         req.add("path2", "0,Wins");
         req.add("path3", "0,Losses");
+        req.add("path4", "0,GameID");
         sendOperatorRequest(req, oraclePayment);
     }
 
@@ -104,12 +109,15 @@ contract BetContract is ChainlinkClient {
 
         for(uint i = 1; i <= betCounter; i++){
         
-            if ((bets[i].conditions == 0 && number2 == 0) || (bets[i].conditions == 1 && number2 == 1)){
-                close_bet(i, bets[i].challenger);
-            }
+            if (bets[i].gameId == currentGameId) {
 
-            if ((bets[i].conditions == 0 && number2 == 1) || (bets[i].conditions == 1 && number2 == 0)){
-                close_bet(i, bets[i].accepter);
+                if ((bets[i].conditions == 0 && number2 == 0) || (bets[i].conditions == 1 && number2 == 1)){
+                    close_bet(i, bets[i].challenger);
+                }
+
+                if ((bets[i].conditions == 0 && number2 == 1) || (bets[i].conditions == 1 && number2 == 0)){
+                    close_bet(i, bets[i].accepter);
+                }
             }
         } 
     }
@@ -136,7 +144,7 @@ contract BetContract is ChainlinkClient {
     
 
     // Publish a new bet
-    function publishBet(string memory _name, uint  _conditions, uint256 _price) public payable {
+    function publishBet( uint  _conditions, uint256 _price, uint256 _gameId) public payable {
 
         require(_price >= 1, "Minimum price is 1 Matic");
         require(msg.value >= _price);
@@ -145,17 +153,17 @@ contract BetContract is ChainlinkClient {
         bets[betCounter] = Bet(
 
             betCounter,
-            msg.sender,
-            payable(0x0),
-            _name,
+            _gameId,
             _conditions,
             _price, 
+            msg.sender,
             payable(0x0),
+            payable(0x0),        
             true,
             false
         );
 
-        emit LogPublishBet(betCounter, msg.sender, _name, _price);
+        emit LogPublishBet(betCounter, msg.sender, _price);
     }
 
 
@@ -171,7 +179,7 @@ contract BetContract is ChainlinkClient {
         
         bet.accepter = msg.sender;
         bet.isAccepted = true;
-        emit LogAcceptBet(_id, bet.challenger, bet.accepter, bet.name, bet.price);
+        emit LogAcceptBet(_id, bet.challenger, bet.accepter, bet.price);
 
     } 
 
@@ -215,7 +223,7 @@ contract BetContract is ChainlinkClient {
     }
 
 
-    function getAvailableBets() public view returns (uint[] memory) {
+    function getAvailableBets() public view returns (Bet[] memory) {
 
         uint[] memory betIds = new uint[](betCounter);
         uint numberOfAvailableBets = 0;
@@ -230,14 +238,16 @@ contract BetContract is ChainlinkClient {
             }
         }
         
-        uint256[] memory availableBets = new uint[](numberOfAvailableBets);
+        Bet[] memory availableBets = new Bet[](numberOfAvailableBets);
 
         // Copy the betIds array into a smaller availableBets array to get rid of empty indexes
         for(uint j = 0; j < numberOfAvailableBets; j++) {
-            availableBets[j] = betIds[j];
+            availableBets[j] = bets[betIds[j]];
         }
         
         return availableBets; 
     
     }   
+
+
 }
