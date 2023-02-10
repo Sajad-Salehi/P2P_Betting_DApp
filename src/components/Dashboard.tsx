@@ -1,83 +1,97 @@
+import React, { useState } from 'react';
+import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
+import AcceptBet from './AcceptBet';
+import PublishBet from './PublishBet';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import Head from 'next/head';
-import styles from '../styles/Home.module.css';
-import { useAccount, useConnect, useContractRead, useSigner  } from 'wagmi'
-import { useState, useEffect } from 'react';
-const {abi} = require('../abi.json')
 
 
-export default function BetList() {
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      backgroundColor: '#f1f1f1'
+    },
+    button: {
+      margin: theme.spacing(1),
+      width: '150px',
+      height: '50px',
+      fontWeight: 'bold'
+    },
+    box: {
 
-  const [bets, setBets] = useState([]);
-  const ContractAddress = "0xAB206d594ae3fE15674e2Fa4Bb4dfe9316Fce822"
-
-
-  const contractConfig = {
-    address: ContractAddress,
-    abi: abi,
-  }
-
-  const { data: AvailableBets } = useContractRead({
-    ...contractConfig,
-    functionName: 'getAvailableBets',
-    watch: true,
-    chainId: 80001,
-  });
-
-  useEffect(() => {
-    
-    setBets(AvailableBets)
-  }, []);
-
-
-  function AcceptBetForm() {
-    const [betId, setBetId] = useState('')
-  
-    const handleAcceptBet = () => {
-      // TODO: Call the acceptBet method on the betting smart contract with the betId
+      width: "60%",
+      height: "80%",
+      backgroundColor: 'blue',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center'
     }
-  }
+  })
+);
 
+interface Props {}
+
+const MainPage: React.FC<Props> = () => {
+  const classes = useStyles();
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showBack, setShowBack] = useState(false);
+
+  const handleClick = (option: string) => {
+    setSelectedOption(option);
+    setShowBack(true);
+  };
+
+  const handleBack = () => {
+    setSelectedOption(null);
+    setShowBack(false);
+  };
 
   return (
-
-    <div className={styles.tablePage} >
-      <h2>Bet List</h2>
-      <table className={styles.table}>
-        <thead className={styles.thead}>
-          <tr>
-            <th className={styles.th}>Bet ID</th>
-            <th className={styles.th}>Game Id</th>
-            <th className={styles.th}>Price</th>
-            <th className={styles.th}>Condition</th>
-          </tr>
-        </thead>
-        <tbody className={styles.tbody}>
-          {bets.map((bet) => (
-            <tr key={bet.id}>
-
-              <td className={styles.th}>{bet.id.toNumber()}</td>
-              <td className={styles.th}>{bet.gameId.toNumber()}</td>
-              <td className={styles.th}>{bet.price.toNumber()}</td>
-              <td className={styles.th}>{bet.conditions.toNumber()}</td>
-
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div>
-        <h3>Enter the Bet Id to accept</h3>
-        <input
-        type="text"
-        value=''
-        onChange={e => setBetId(e.target.value)}
-        placeholder="Enter bet ID"
-      />
-      <button onClick={AcceptBetForm}>Accept bet</button>
-      </div>
+    <div >
+      <ConnectButton />
+      {!selectedOption && (
+        <div>
+          <h1>Bet User Dashboard</h1>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => handleClick('accept')}
+          >
+            Accept Bet
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => handleClick('publish')}
+          >
+            Publish Bet
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => handleClick('list')}
+          >
+            List Bets
+          </Button>
+        </div>
+      )}
+      {showBack && (
+        <Button variant="contained" color="secondary" onClick={handleBack}>
+          Back
+        </Button>
+      )}
+      {selectedOption === 'accept' && <AcceptBet />}
+      {selectedOption === 'publish' && <PublishBet />}
+      {selectedOption === 'list' && <div>dd</div>}
+      
     </div>
-
   );
 };
 
+export default MainPage;
