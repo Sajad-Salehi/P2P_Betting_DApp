@@ -140,10 +140,49 @@
   font-family: sans-serif;
 }
 
-.cbutton {
 
-  
+.tablePage {
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+
 }
+
+
+.table {
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  width: 100%;
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+}
+
+.thead {
+  background-color: #dddddd;
+}
+
+.th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+.tbody {
+}
+
+.tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+.td {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+
+
 
 @media (max-width: 600px) {
   .grid {
