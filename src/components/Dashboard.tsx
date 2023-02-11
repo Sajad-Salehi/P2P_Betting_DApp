@@ -3,6 +3,7 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import AcceptBet from './AcceptBet';
 import PublishBet from './PublishBet';
+import MyBets from './MyBets';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 
@@ -77,7 +78,7 @@ const MainPage: React.FC<Props> = () => {
             className={classes.button}
             onClick={() => handleClick('list')}
           >
-            List Bets
+            My Bets
           </Button>
         </div>
       )}
@@ -88,7 +89,7 @@ const MainPage: React.FC<Props> = () => {
       )}
       {selectedOption === 'accept' && <AcceptBet />}
       {selectedOption === 'publish' && <PublishBet />}
-      {selectedOption === 'list' && <div>dd</div>}
+      {selectedOption === 'list' && <MyBets />}
       
     </div>
   );
