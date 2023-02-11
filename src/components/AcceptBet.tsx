@@ -14,7 +14,6 @@ import styles from '../styles/Home.module.css';
 import { useAccount, useConnect, useContractRead, useSigner, useContractWrite  } from 'wagmi'
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { usePrepareContractWrite } from 'wagmi'
 const {abi} = require('../abi.json')
 
 
@@ -33,14 +32,15 @@ const GameTable: React.FC = ({  }) => {
 
 
   const classes = useStyles();
+  const {address} = useAccount();
   const [bets, setBets] = useState([]);
   const [betId, setBetId] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0xAB206d594ae3fE15674e2Fa4Bb4dfe9316Fce822"
+  const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
 
 
   const handleClick = (gameId: number, price: string) => {
-    // send name and gameId to a function as a parameter
+    
     console.log(typeof(gameId), gameId);
     let contract = new ethers.Contract(ContractAddress, abi, signer)
     let tx = contract.acceptBet(gameId,  { value: price})
@@ -73,37 +73,47 @@ const GameTable: React.FC = ({  }) => {
       <Table className={classes.table} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell align="right">Bet ID</TableCell>
+            <TableCell>Bet ID</TableCell>
+            <TableCell align="right">Home Team</TableCell>
+            <TableCell align="right">Away Team</TableCell>
             <TableCell align="right">Game ID</TableCell>
             <TableCell align="right">Price</TableCell>
-            <TableCell align="right">Condition</TableCell>
-            <TableCell align="right"></TableCell>
+            <TableCell align="right">Date Time</TableCell>
+            <TableCell align="right">Winner Team ID Condition</TableCell>
+            <TableCell align="right">Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {bets.map((row) => (
-            <TableRow key={row.gameId.toNumber()}>
-              <TableCell component="th" scope="row">
-
-              </TableCell>
-              <TableCell align="right">{row.id.toNumber()}</TableCell>
-              <TableCell align="right">{row.gameId.toNumber()}</TableCell>
-              <TableCell align="right">{row.price / 1e18}</TableCell>
-              <TableCell align="right">{row.conditions.toNumber()}</TableCell>
-              <TableCell align="right">
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleClick( row.id.toNumber(), row.price.toString())}
-                >
-                  Accept
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {bets?.map((row) => {
+            if (row.challenger !== address) {
+              return (
+                <TableRow key={row.gameId.toNumber()}>
+                  <TableCell component="th" scope="row">
+                    {row.id.toNumber()}
+                  </TableCell>
+                  <TableCell align="right">{row.HomeTeam}</TableCell>
+                  <TableCell align="right">{row.AwayTeam}</TableCell>
+                  <TableCell align="right">{row.gameId.toNumber()}</TableCell>
+                  <TableCell align="right">{row.price / 1e18}</TableCell>
+                  <TableCell align="right">{row.DateTime}</TableCell>
+                  <TableCell align="right">{row.teamId.toNumber()}</TableCell>
+                  <TableCell align="right">
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleClick( row.id.toNumber(), row.price.toString())}
+                    >
+                      Accept
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+            return null;
+          })}
         </TableBody>
+
       </Table>
     </TableContainer>
   );
