@@ -29,13 +29,17 @@ interface Data {
   GameID: string;
   HomeTeam: string;
   AwayTeam: string;
+  DateTime: string;
+  IsClosed: boolean;
+  AwayTeamID: number;
+  HomeTeamID: number;
 }
 
 const PublishBet: React.FC = () => {
   const classes = useStyles();
   const [data, setData] = useState<Data[]>([]);
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0xAB206d594ae3fE15674e2Fa4Bb4dfe9316Fce822"
+  const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
 
 
   useEffect(() => {
@@ -44,20 +48,40 @@ const PublishBet: React.FC = () => {
         'https://api.sportsdata.io/v3/nba/scores/json/Games/2023?key=76c2b56ace2845c59e84f30b8a88ad36'
       );
       const result = await response.json();
-      setData(result);
+      setData(result.sort((a, b) => a.GameID - b.GameID));
     };
     fetchData();
   }, []);
 
-  const handleClick = (gameId: string, homeTeam: string, awayTeam: string) => {
-    let price = prompt('Enter the price:');
-    let condition = prompt('Enter the condition:');
-    
+  const handleClick = (gameId: string, homeTeam: string, awayTeam: string, dataTime: string, homeId: number, awayId: number) => {
 
-    console.log(`Game ID: ${gameId} Home Team: ${homeTeam} Away Team: ${awayTeam} Price: ${price} Condition: ${condition}`);
+    let _teamId;
+    let price = prompt('Enter the price:');
+    if (!price || isNaN(parseFloat(price))) {
+      alert("Invalid price input");
+      return;
+    }
+
+    let condition = prompt('Enter the name of Winner Team: ');
+    if (condition !== awayTeam && condition !== homeTeam) {
+      alert("Invalid Team Name")
+      return;
+    }
+    if (condition === awayTeam){
+      _teamId = awayId
+    }
+    if (condition === homeTeam){
+      _teamId = homeId
+    }
+
+
+   
+    console.log(_teamId, typeof(_teamId))
+    let priceToWei = ethers.utils.parseEther(price);
     let contract = new ethers.Contract(ContractAddress, abi, signer)
-    let tx = contract.publishBet(condition, ethers.utils.parseEther(price.toString()), gameId, {value: ethers.utils.parseEther(price.toString())})
+    let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, {value: priceToWei})
     console.log(tx)
+    
   };
 
   return (
@@ -68,32 +92,41 @@ const PublishBet: React.FC = () => {
             <TableCell>Game ID</TableCell>
             <TableCell align="right">Home Team</TableCell>
             <TableCell align="right">Away Team</TableCell>
+            <TableCell align="right">Date Time</TableCell>
             <TableCell align="right">Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-        {data.map(row => (
-            <TableRow key={row.GameID}>
-              <TableCell component="th" scope="row">
-                {row.GameID}
-              </TableCell>
-              <TableCell align="right">{row.HomeTeam}</TableCell>
-              <TableCell align="right">{row.AwayTeam}</TableCell>
-              <TableCell align="right">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  className={classes.button}
-                  onClick={() => handleClick(row.GameID, row.HomeTeam, row.AwayTeam)}
-                >
-                  Publish Bet
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {data
+            .filter(
+              row =>
+                row.IsClosed === false
+            )
+            .slice(0, 5)
+            .map(row => (
+              <TableRow key={row.GameID}>
+                <TableCell component="th" scope="row">
+                  {row.GameID}
+                </TableCell>
+                <TableCell align="right">{row.HomeTeam}</TableCell>
+                <TableCell align="right">{row.AwayTeam}</TableCell>
+                <TableCell align="right">{row.DateTime}</TableCell>
+                <TableCell align="right">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className={classes.button}
+                    onClick={() => handleClick(row.GameID, row.HomeTeam, row.AwayTeam, row.DateTime, row.HomeTeamID, row.AwayTeamID)}
+                  >
+                    Publish Bet
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </TableContainer>
+
   );
 };
 
