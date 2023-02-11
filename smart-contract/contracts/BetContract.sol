@@ -1,24 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 
 contract BetContract is ChainlinkClient {
 
     
-    uint256 number1;
-    uint256 number2;
-    uint256 currentGameId;        
-    uint256 betCounter = 0;
+    uint256 public winning;         // latest match wining result
+    uint256 public losing;          // latest match losing result
+    uint256 public currentTeamId;   // latest match team id
+    uint256 public currentGameId;   // latest match gameId   
+    uint256 public betCounter;      // number of all bets
 
     bytes32 private externalJobId;
     uint256 private oraclePayment;
     using Chainlink for Chainlink.Request;
 
-    mapping (uint => Bet) public bets;
-    mapping (address => Bet) public AddressToBet;
+    mapping (uint => Bet) public bets; // bet id to bet struct
+    mapping (address => uint[]) AddressToBetId; // mapping from each user address to list of user bets id
+
+
+
+    struct Bet {
+
+        uint id;
+        uint gameId;
+        uint teamId;
+        string HomeTeam;
+        string AwayTeam;
+        string DateTime;
+        uint price;
+        address challenger;
+        address accepter;
+        address winner;
+        bool isAlive;
+        bool isAccepted;
+        string status;
+    }
 
 
     event RequestFulfilled(
@@ -26,20 +45,6 @@ contract BetContract is ChainlinkClient {
         uint256 number1, 
         uint256 number2
     );
-
-
-    struct Bet {
-
-        uint id;
-        uint gameId;
-        uint conditions;
-        uint price;
-        address challenger;
-        address accepter;
-        address winner;
-        bool isAlive;
-        bool isAccepted;
-    }
 
 
     event LogPublishBet(
@@ -80,7 +85,8 @@ contract BetContract is ChainlinkClient {
 
     } 
 
-    function requestMultiVariable() internal {
+    // request to oracle and get the latest match result from the api
+    function requestMultiVariable() public {
 
         Chainlink.Request memory req = buildChainlinkRequest(externalJobId, address(this), this.fulfillBytesAndUint.selector);
         req.add("get", "https://api.sportsdata.io/v3/nba/scores/json/TeamGameStatsBySeason/2023/11/1?key=76c2b56ace2845c59e84f30b8a88ad36");
@@ -88,35 +94,40 @@ contract BetContract is ChainlinkClient {
         req.add("path2", "0,Wins");
         req.add("path3", "0,Losses");
         req.add("path4", "0,GameID");
+        req.add("path5", "0,TeamId");
         sendOperatorRequest(req, oraclePayment);
     }
 
 
-    function fulfillBytesAndUint(bytes32 requestId, uint256 _number1, uint256 _number2)
+    function fulfillBytesAndUint(bytes32 requestId, uint256 _number1, uint256 _number2, uint256 _gameId, uint256 _TeamId)
         public recordChainlinkFulfillment(requestId){
     
         emit RequestFulfilled(requestId, _number1, _number2);
-        number1 = _number1;
-        number2 = _number2;
+        winning = _number1;
+        losing = _number2;
+        currentGameId = _gameId;
+        currentTeamId = _TeamId;
     }
  
     
     // find winners and then close bets
+    // this function uses chainlink upkeep
     function upkeep_setWinner() public {
 
         requestMultiVariable();
-        require(number1 == 1 || number2 == 1);
 
         for(uint i = 1; i <= betCounter; i++){
         
             if (bets[i].gameId == currentGameId) {
 
-                if ((bets[i].conditions == 0 && number2 == 0) || (bets[i].conditions == 1 && number2 == 1)){
+                if (currentTeamId == bets[i].teamId){
                     close_bet(i, bets[i].challenger);
+
                 }
 
-                if ((bets[i].conditions == 0 && number2 == 1) || (bets[i].conditions == 1 && number2 == 0)){
+                else if(currentTeamId != bets[i].teamId){
                     close_bet(i, bets[i].accepter);
+
                 }
             }
         } 
@@ -131,6 +142,7 @@ contract BetContract is ChainlinkClient {
         }
         
         bets[id].winner = _to;
+        bets[id].status = "Closed";
         bets[id].isAlive = false;
         
         uint256 amount = bets[id].price * 2;
@@ -143,42 +155,55 @@ contract BetContract is ChainlinkClient {
     }
     
 
-    // Publish a new bet
-    function publishBet( uint  _conditions, uint256 _price, uint256 _gameId) public payable {
+    // Publish a new bet 
+    function publishBet( 
+        uint256 _price, uint256 _gameId, string memory _homeTeam, string memory _awayTeam, string memory _dataTime, uint _teamId) public payable {
 
-        require(_price >= 1, "Minimum price is 1 Matic");
-        require(msg.value >= _price);
+        // publisher should send bet price as msg.value and price should be at least 0.01 Matic
+        require(_price >= 0.001 * 1e18, "Minimum price is 1 Matic");
+        require(msg.value >= _price, "You should provide price as msg.value");
         
         betCounter++;
         bets[betCounter] = Bet(
 
             betCounter,
             _gameId,
-            _conditions,
+            _teamId,
+            _homeTeam,
+            _awayTeam,
+            _dataTime,
             _price, 
             msg.sender,
             payable(0x0),
             payable(0x0),        
             true,
-            false
+            false,
+            "Published"
         );
 
+        AddressToBetId[msg.sender].push(betCounter);
         emit LogPublishBet(betCounter, msg.sender, _price);
     }
 
 
+    // accept the specific Bet 
     function acceptBet(uint _id ) public payable {
 
         Bet storage bet = bets[_id];
-
+        
+        // the bet sould alive and not closed or accepted before
+        // accepter should send the bet price as msg.value
         require(bet.isAlive == true, "The bet was canceled");
         require(betCounter > 0, "Bet is not published");
         require(_id > 0 && _id <= betCounter, "Bet is not published");
-        require(msg.sender != bet.challenger);
-        require(msg.value >= bet.price);
+        require(msg.sender != bet.challenger, "Challenger can not accept the bet");
+        require(msg.value >= bet.price, "You should provide price as msg.value");
         
         bet.accepter = msg.sender;
         bet.isAccepted = true;
+        bet.status = "Accepted";
+        AddressToBetId[msg.sender].push(betCounter);
+
         emit LogAcceptBet(_id, bet.challenger, bet.accepter, bet.price);
 
     } 
@@ -188,25 +213,29 @@ contract BetContract is ChainlinkClient {
 
         Bet storage bet = bets[_id];
 
+        // msg.sender should be challenger
         require(bet.isAlive == true, "The bet was canceled");
         require(betCounter >= _id && _id > 0, "Bet is not published");
-        require(msg.sender == bet.challenger);
+        require(msg.sender == bet.challenger, "Bet challenger can cancel");
 
         bet.isAlive = false;
+        bet.status = "Canceled";
         uint256 amount = bet.price;
         address payable to = payable(bet.challenger);
 
+        // send back bet price to challanger
         bool isSuccess = to.send(amount);
         require(isSuccess, "Transaction Failed");
         
     }
 
-
+    // return number of all of bets in the contract
     function getNumberOfBets() public view returns (uint) {
         return betCounter;
     }
 
 
+    // return number of available Bets
     function getNumberOfAvailableBets() public view returns(uint) {
         
         uint numberOfAvailableBets = 0;
@@ -214,7 +243,6 @@ contract BetContract is ChainlinkClient {
         for(uint i = 1; i <=  betCounter ; i++){
 
             if(bets[i].isAccepted == false && bets[i].isAlive == true) {
-
                 numberOfAvailableBets++;
             }
         }
@@ -223,6 +251,7 @@ contract BetContract is ChainlinkClient {
     }
 
 
+    // create the list of available Bets and return it
     function getAvailableBets() public view returns (Bet[] memory) {
 
         uint[] memory betIds = new uint[](betCounter);
@@ -244,10 +273,25 @@ contract BetContract is ChainlinkClient {
         for(uint j = 0; j < numberOfAvailableBets; j++) {
             availableBets[j] = bets[betIds[j]];
         }
-        
+
         return availableBets; 
-    
     }   
+
+    // returns the list of msg.seder bets
+    function getUserBets() public view returns(Bet[] memory) {
+
+        uint size = AddressToBetId[msg.sender].length;
+        Bet[] memory userBets = new Bet[](size);
+
+        for(uint i = 0; i < size; i++) {
+
+            uint index = AddressToBetId[msg.sender][i];
+            userBets[i] = bets[index]; 
+        }
+
+        return userBets;
+    }
+
 
 
 }
