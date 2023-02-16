@@ -12,7 +12,7 @@ export default function MainPage(): JSX.Element {
   const [AllBets, setAllBet] = useState(0)
   const [availableBets, setavailableBet] = useState(0)
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
+  const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
   const contractConfig = {

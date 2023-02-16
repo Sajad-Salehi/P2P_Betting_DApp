@@ -37,7 +37,9 @@ const MyBets: React.FC = ({  }) => {
         price: number;
         teamId: number;
         status: string;
-        HomeTeam: string
+        HomeTeam: string;
+        teamName: string;
+        AwayTeam: string;
     
     }
 
@@ -46,7 +48,7 @@ const MyBets: React.FC = ({  }) => {
     const [bets, setBets] = useState<Bet[]>([]);
     const [betId, setBetId] = useState('')
     const { data: signer, isError, isLoading } = useSigner()
-    const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
+    const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
     const handleClick = (gameId: number) => {
@@ -86,9 +88,10 @@ const MyBets: React.FC = ({  }) => {
             <TableRow>
                 <TableCell>Bet ID</TableCell>
                 <TableCell>Home Team</TableCell>
+                <TableCell>Away Team</TableCell>
                 <TableCell>Game Id</TableCell>
                 <TableCell>Price</TableCell>
-                <TableCell>Winner Team ID Condition</TableCell>
+                <TableCell>Winner Team condition</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell >Action</TableCell>
 
@@ -99,9 +102,10 @@ const MyBets: React.FC = ({  }) => {
                     <TableRow key={bet.id.toNumber()}>
                     <TableCell>{bet.id.toNumber()}</TableCell>
                     <TableCell>{bet.HomeTeam}</TableCell>
+                    <TableCell>{bet.AwayTeam}</TableCell>
                     <TableCell>{bet.gameId.toNumber()}</TableCell>
                     <TableCell>{bet.price.toNumber() / 1e18}</TableCell>
-                    <TableCell>{bet.teamId.toNumber()}</TableCell>
+                    <TableCell>{bet.teamName.toString()}</TableCell>
                     <TableCell>{bet.status}</TableCell>
                     <TableCell>
                         {bet.status === "Published" && (

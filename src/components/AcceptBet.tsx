@@ -36,7 +36,7 @@ const GameTable: React.FC = ({  }) => {
   const [bets, setBets] = useState([]);
   const [betId, setBetId] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
+  const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
   const handleClick = (gameId: number, price: string) => {
@@ -79,7 +79,7 @@ const GameTable: React.FC = ({  }) => {
             <TableCell align="right">Game ID</TableCell>
             <TableCell align="right">Price</TableCell>
             <TableCell align="right">Date Time</TableCell>
-            <TableCell align="right">Winner Team ID Condition</TableCell>
+            <TableCell align="right">Winner Team Condition</TableCell>
             <TableCell align="right">Action</TableCell>
           </TableRow>
         </TableHead>
@@ -96,7 +96,7 @@ const GameTable: React.FC = ({  }) => {
                   <TableCell align="right">{row.gameId.toNumber()}</TableCell>
                   <TableCell align="right">{row.price / 1e18}</TableCell>
                   <TableCell align="right">{row.DateTime}</TableCell>
-                  <TableCell align="right">{row.teamId.toNumber()}</TableCell>
+                  <TableCell align="right">{row.teamName.toString()}</TableCell>
                   <TableCell align="right">
                     <Button
                       className={classes.button}

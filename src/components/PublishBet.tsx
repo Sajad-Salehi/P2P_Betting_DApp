@@ -8,7 +8,7 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import { useSigner } from 'wagmi';
+import { useSigner, useContractRead } from 'wagmi';
 import { ethers } from 'ethers';
 const {abi} = require('../abi.json')
 
@@ -38,8 +38,28 @@ interface Data {
 const PublishBet: React.FC = () => {
   const classes = useStyles();
   const [data, setData] = useState<Data[]>([]);
+  const [currentId, setCurrentGame] = useState<number>();
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0x16C957EDF52601165373c97d0316c2ca5A71b121"
+  const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
+
+
+
+  const contractConfig = {
+    address: ContractAddress,
+    abi: abi,
+  }
+
+  const { data: GameID } = useContractRead({
+    ...contractConfig,
+    functionName: 'currentGameId',
+    watch: true,
+    chainId: 80001,
+  });
+
+  useEffect(() => {
+    console.log(GameID)
+    setCurrentGame(GameID.toNumber())
+  }, []);
 
 
   useEffect(() => {
@@ -48,7 +68,7 @@ const PublishBet: React.FC = () => {
         'https://api.sportsdata.io/v3/nba/scores/json/Games/2023?key=76c2b56ace2845c59e84f30b8a88ad36'
       );
       const result = await response.json();
-      setData(result.sort((a, b) => a.GameID - b.GameID));
+      setData(result);
     };
     fetchData();
   }, []);
@@ -79,7 +99,7 @@ const PublishBet: React.FC = () => {
     console.log(_teamId, typeof(_teamId))
     let priceToWei = ethers.utils.parseEther(price);
     let contract = new ethers.Contract(ContractAddress, abi, signer)
-    let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, {value: priceToWei})
+    let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, condition, {value: priceToWei})
     console.log(tx)
     
   };
@@ -98,11 +118,9 @@ const PublishBet: React.FC = () => {
         </TableHead>
         <TableBody>
           {data
-            .filter(
-              row =>
-                row.IsClosed === false
-            )
-            .slice(0, 5)
+            .sort((a, b) => a.GameID - b.GameID)
+            .filter(row => row.GameID > currentId)
+            .slice(10, 30)
             .map(row => (
               <TableRow key={row.GameID}>
                 <TableCell component="th" scope="row">
