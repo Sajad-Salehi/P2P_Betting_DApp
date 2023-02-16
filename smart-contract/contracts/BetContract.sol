@@ -27,6 +27,7 @@ contract BetContract is ChainlinkClient {
         uint id;
         uint gameId;
         uint teamId;
+        string teamName;
         string HomeTeam;
         string AwayTeam;
         string DateTime;
@@ -41,10 +42,14 @@ contract BetContract is ChainlinkClient {
 
 
     event RequestFulfilled(
-        bytes32 indexed requestId, 
-        uint256 number1, 
-        uint256 number2
+
+        bytes32 indexed requestId,
+        uint256 number1,
+        uint256 number2,
+        uint256 gameId,
+        uint256 teamId
     );
+
 
 
     event LogPublishBet(
@@ -80,7 +85,7 @@ contract BetContract is ChainlinkClient {
         
         setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
         setChainlinkOracle(0x7ca7215c6B8013f249A195cc107F97c4e623e5F5);
-        externalJobId = "28d535568b7848adb2369e1850aa4e1c";
+        externalJobId = "00594814638f41c6a9cd1ae3dfa982d6";
         oraclePayment = (1 * LINK_DIVISIBILITY) / 10;
 
     } 
@@ -93,8 +98,8 @@ contract BetContract is ChainlinkClient {
         req.add("path1", "0,Name");
         req.add("path2", "0,Wins");
         req.add("path3", "0,Losses");
-        req.add("path4", "0,GameID");
-        req.add("path5", "0,TeamId");
+        req.add("path4" , "0,GameID");
+        req.add("path5", "0,TeamID");
         sendOperatorRequest(req, oraclePayment);
     }
 
@@ -102,7 +107,7 @@ contract BetContract is ChainlinkClient {
     function fulfillBytesAndUint(bytes32 requestId, uint256 _number1, uint256 _number2, uint256 _gameId, uint256 _TeamId)
         public recordChainlinkFulfillment(requestId){
     
-        emit RequestFulfilled(requestId, _number1, _number2);
+        emit RequestFulfilled(requestId, _number1, _number2, _gameId, _TeamId);
         winning = _number1;
         losing = _number2;
         currentGameId = _gameId;
@@ -157,7 +162,7 @@ contract BetContract is ChainlinkClient {
 
     // Publish a new bet 
     function publishBet( 
-        uint256 _price, uint256 _gameId, string memory _homeTeam, string memory _awayTeam, string memory _dataTime, uint _teamId) public payable {
+        uint256 _price, uint256 _gameId, string memory _homeTeam, string memory _awayTeam, string memory _dataTime, uint _teamId, string memory _teamName) public payable {
 
         // publisher should send bet price as msg.value and price should be at least 0.01 Matic
         require(_price >= 0.001 * 1e18, "Minimum price is 1 Matic");
@@ -169,6 +174,7 @@ contract BetContract is ChainlinkClient {
             betCounter,
             _gameId,
             _teamId,
+            _teamName,
             _homeTeam,
             _awayTeam,
             _dataTime,
@@ -290,6 +296,25 @@ contract BetContract is ChainlinkClient {
         }
 
         return userBets;
+    }
+
+
+    // set and return the winner condition team for accepter
+    function getAcceptWinnerTeamName(uint id) public view returns(string memory) {
+
+        Bet memory betPosition = bets[id];
+        string memory team = betPosition.teamName;
+
+        if (keccak256(bytes(team)) == keccak256(bytes(betPosition.HomeTeam))){
+
+            return betPosition.AwayTeam;
+        }
+
+        else {
+
+            return betPosition.HomeTeam;
+        }
+
     }
 
 
