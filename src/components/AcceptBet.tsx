@@ -35,7 +35,7 @@ const GameTable: React.FC = ({  }) => {
   const {address} = useAccount();
   const [betId, setBetId] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
-  const [bets, setBets] = useState<unknown[]>([]);
+  const [bets, setBets] = useState<never[]>([]);
   const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
