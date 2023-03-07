@@ -67,7 +67,7 @@ const GameTable: React.FC = ({  }) => {
 
   useEffect(() => {
     
-    setBets(AvailableBets)
+    setBets(AvailableBets as never)
   }, []);
 
 
