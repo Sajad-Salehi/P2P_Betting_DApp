@@ -13,7 +13,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useAccount, useConnect, useContractRead, useSigner, useContractWrite  } from 'wagmi'
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 const {abi} = require('../abi.json')
 
 
@@ -28,6 +28,19 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+
+interface Bet {
+  id: BigNumber;
+  HomeTeam: string;
+  AwayTeam: string;
+  gameId: BigNumber;
+  price: BigNumber;
+  DateTime: string;
+  teamName: string;
+  challenger: string;
+}
+
+
 const GameTable: React.FC = ({  }) => {
 
 
@@ -35,7 +48,7 @@ const GameTable: React.FC = ({  }) => {
   const {address} = useAccount();
   const [betId, setBetId] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
-  const [bets, setBets] = useState<never[]>([]);
+  const [bets, setBets] = useState<Bet[]>([]);
   const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
