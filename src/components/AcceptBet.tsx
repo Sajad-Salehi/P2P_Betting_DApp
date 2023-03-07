@@ -41,10 +41,12 @@ const GameTable: React.FC = ({  }) => {
 
   const handleClick = (gameId: number, price: string) => {
     try{
-      console.log(typeof(gameId), gameId);
-      let contract = new ethers.Contract(ContractAddress, abi, signer)
-      let tx = contract.acceptBet(gameId,  { value: price})
-      console.log(tx)
+      if(signer){
+        console.log(typeof(gameId), gameId);
+        let contract = new ethers.Contract(ContractAddress, abi, signer)
+        let tx = contract.acceptBet(gameId,  { value: price})
+        console.log(tx)
+      }
       
     } catch(err) {
       console.error('Error in Accept bet:', err);
