@@ -33,9 +33,9 @@ const GameTable: React.FC = ({  }) => {
 
   const classes = useStyles();
   const {address} = useAccount();
-  const [bets, setBets] = useState([]);
   const [betId, setBetId] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
+  const [bets, setBets] = useState<unknown[]>([]);
   const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
 
@@ -67,12 +67,7 @@ const GameTable: React.FC = ({  }) => {
 
   useEffect(() => {
     
-    if (Array.isArray(AvailableBets)) {
-      setBets(AvailableBets);
-    } else {
-      console.error("AvailableBets is not an array:", AvailableBets);
-    }
-    
+    setBets(AvailableBets)
   }, []);
 
 
