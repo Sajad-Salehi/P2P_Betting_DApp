@@ -71,7 +71,7 @@ const MyBets: React.FC = () => {
   useEffect(() => {
     if (!userBetsError) {
       console.log(UserBets);
-      setBets(UserBets);
+      setBets(UserBets as never);
     } else {
       console.error('Error in get user bets:', userBetsError);
     }
@@ -98,11 +98,11 @@ const MyBets: React.FC = () => {
             </TableHead>
             <TableBody>
                 {bets?.map((bet) => (
-                    <TableRow key={bet.id.toNumber()}>
-                    <TableCell>{bet.id.toNumber()}</TableCell>
+                    <TableRow key={bet.id.toString()}>
+                    <TableCell>{bet.id.toString()}</TableCell>
                     <TableCell>{bet.HomeTeam}</TableCell>
                     <TableCell>{bet.AwayTeam}</TableCell>
-                    <TableCell>{bet.gameId.toNumber()}</TableCell>
+                    <TableCell>{bet.gameId.toString()}</TableCell>
                     <TableCell>{bet.price / 1e18}</TableCell>
                     <TableCell>{bet.teamName.toString()}</TableCell>
                     <TableCell>{bet.status}</TableCell>

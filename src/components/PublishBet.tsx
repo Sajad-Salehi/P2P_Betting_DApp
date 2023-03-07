@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Data {
-  GameID: string;
+  GameID: number;
   HomeTeam: string;
   AwayTeam: string;
   DateTime: string;
@@ -59,7 +59,7 @@ const PublishBet: React.FC = () => {
   useEffect(() => {
     try{
       console.log(GameID)
-      setCurrentGame(GameID.toNumber())
+      setCurrentGame(GameID as number)
     } catch(err) {
       console.log("Error: ", err)
     }
@@ -81,7 +81,7 @@ const PublishBet: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleClick = (gameId: string, homeTeam: string, awayTeam: string, dataTime: string, homeId: number, awayId: number) => {
+  const handleClick = (gameId: number, homeTeam: string, awayTeam: string, dataTime: string, homeId: number, awayId: number) => {
 
     let _teamId;
     let price = prompt('Enter the price:');
@@ -107,9 +107,11 @@ const PublishBet: React.FC = () => {
     console.log(_teamId, typeof(_teamId))
     let priceToWei = ethers.utils.parseEther(price);
     try {
-      let contract = new ethers.Contract(ContractAddress, abi, signer)
-      let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, condition, {value: priceToWei})
-      console.log(tx)
+      if (signer) {
+        let contract = new ethers.Contract(ContractAddress, abi, signer)
+        let tx = contract.publishBet(priceToWei, gameId, homeTeam, awayTeam, dataTime, _teamId, condition, {value: priceToWei})
+        console.log(tx)
+      }
     }catch (err) {
       console.error('Error in publish bet:', err);
     }
@@ -133,7 +135,7 @@ const PublishBet: React.FC = () => {
         <TableBody>
           {data
             .sort((a, b) => a.GameID - b.GameID)
-            .filter(row => row.GameID > currentId)
+            .filter(row => currentId && row.GameID > currentId)
             .slice(10, 30)
             .map(row => (
               <TableRow key={row.GameID}>
