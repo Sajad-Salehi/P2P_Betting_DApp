@@ -67,7 +67,12 @@ const GameTable: React.FC = ({  }) => {
 
   useEffect(() => {
     
-    setBets(AvailableBets)
+    if (Array.isArray(AvailableBets)) {
+      setBets(AvailableBets);
+    } else {
+      console.error("AvailableBets is not an array:", AvailableBets);
+    }
+    
   }, []);
 
 
