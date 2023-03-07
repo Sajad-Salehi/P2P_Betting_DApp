@@ -112,7 +112,7 @@ const MyBets: React.FC = () => {
                             className={classes.button}
                             variant="contained"
                             color="primary"
-                            onClick={() => handleClick(bet.id.toNumber())}
+                            onClick={() => handleClick(bet.id)}
                             >
                             Cancel
                             </Button>
