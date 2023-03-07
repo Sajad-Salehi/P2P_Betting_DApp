@@ -9,8 +9,8 @@ const {abi} = require('../abi.json')
 
 export default function MainPage(): JSX.Element {
 
-  const [AllBets, setAllBet] = useState(0)
-  const [availableBets, setavailableBet] = useState(0)
+  const [AllBets, setAllBet] = useState('')
+  const [availableBets, setavailableBet] = useState('')
   const { data: signer, isError, isLoading } = useSigner()
   const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
@@ -38,7 +38,7 @@ export default function MainPage(): JSX.Element {
 
   useEffect(() => {
     try{
-		setAllBet(AllOfBets.toString())
+		setAllBet(AllOfBets as string)
 
     } catch(err){
       console.log('Error:', err)
@@ -48,7 +48,7 @@ export default function MainPage(): JSX.Element {
 
   useEffect(() => {
     try{
-		  setavailableBet(AvailableBets.toString())
+		  setavailableBet(AvailableBets as string)
   
       } catch(err){
         console.log('Error:', err)
