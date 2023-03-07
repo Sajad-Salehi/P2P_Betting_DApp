@@ -37,12 +37,22 @@ export default function MainPage(): JSX.Element {
   
 
   useEffect(() => {
-		setAllBet(AllOfBets.toNumber())
+    try{
+		setAllBet(AllOfBets.toString())
+
+    } catch(err){
+      console.log('Error:', err)
+    } 
+    
 	}, []);
 
   useEffect(() => {
-    console.log(AvailableBets.toNumber())
-		setavailableBet(AvailableBets.toNumber())
+    try{
+		  setavailableBet(AvailableBets.toString())
+  
+      } catch(err){
+        console.log('Error:', err)
+      } 
 	}, []);
 
 
@@ -94,7 +104,7 @@ export default function MainPage(): JSX.Element {
         </main>
   
         <footer className={styles.footer}>
-          <a href="https://rainbow.me" target="_blank" rel="noopener noreferrer">
+          <a target="_blank" rel="noopener noreferrer">
             Made with ❤️ by devs at Aryan Institue 
           </a>
         </footer>

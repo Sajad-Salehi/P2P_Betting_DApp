@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -11,11 +11,9 @@ import Button from '@material-ui/core/Button';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import { useAccount, useConnect, useContractRead, useSigner, useContractWrite  } from 'wagmi'
-import { useState, useEffect } from 'react';
+import { useAccount, useConnect, useContractRead, useSigner, useContractWrite } from 'wagmi';
 import { ethers } from 'ethers';
-const {abi} = require('../abi.json')
-
+const { abi } = require('../abi.json');
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,55 +26,56 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const MyBets: React.FC = ({  }) => {
+interface Bet {
+  id: number;
+  gameId: number;
+  price: number;
+  teamId: number;
+  status: string;
+  HomeTeam: string;
+  teamName: string;
+  AwayTeam: string;
+}
 
+const MyBets: React.FC = () => {
+  const classes = useStyles();
+  const { address } = useAccount();
+  const [bets, setBets] = useState<Bet[]>([]);
+  const [betId, setBetId] = useState('');
+  const { data: signer, isError: signerError, isLoading: signerLoading } = useSigner();
+  const ContractAddress = '0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2';
 
-    interface Bet {
-        id: number;
-        gameId: number;
-        price: number;
-        teamId: number;
-        status: string;
-        HomeTeam: string;
-        teamName: string;
-        AwayTeam: string;
-    
+  const handleClick = async (gameId: number) => {
+    try {
+      if (!signer) throw new Error('Signer not available');
+      let contract = new ethers.Contract(ContractAddress, abi, signer);
+      let tx = await contract.cancelBet(gameId);
+    } catch (err) {
+      console.error('Error in cancel bet:', err);
     }
+  };
 
-    const classes = useStyles();
-    const {address} = useAccount();
-    const [bets, setBets] = useState<Bet[]>([]);
-    const [betId, setBetId] = useState('')
-    const { data: signer, isError, isLoading } = useSigner()
-    const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
+  const contractConfig = {
+    address: ContractAddress,
+    abi: abi,
+  };
 
+  const { data: UserBets, isError: userBetsError, isLoading: userBetsLoading } = useContractRead({
+    ...contractConfig,
+    functionName: 'getUserBets',
+    watch: true,
+    chainId: 80001,
+    overrides: { from: address },
+  });
 
-    const handleClick = (gameId: number) => {
-
-        let contract = new ethers.Contract(ContractAddress, abi, signer)
-        let tx = contract.cancelBet(gameId)
-    };
-
-
-    const contractConfig = {
-        address: ContractAddress,
-        abi: abi,
+  useEffect(() => {
+    if (!userBetsError) {
+      console.log(UserBets);
+      setBets(UserBets);
+    } else {
+      console.error('Error in get user bets:', userBetsError);
     }
-
-    const { data: UserBets } = useContractRead({
-        ...contractConfig,
-        functionName: 'getUserBets',
-        watch: true,
-        chainId: 80001,
-        overrides: { from: address },
-
-    });
-
-    useEffect(() => {
-        
-        console.log(UserBets)
-        setBets(UserBets)
-    }, []);
+  }, [UserBets, userBetsError]);
 
 
 
@@ -104,7 +103,7 @@ const MyBets: React.FC = ({  }) => {
                     <TableCell>{bet.HomeTeam}</TableCell>
                     <TableCell>{bet.AwayTeam}</TableCell>
                     <TableCell>{bet.gameId.toNumber()}</TableCell>
-                    <TableCell>{bet.price.toNumber() / 1e18}</TableCell>
+                    <TableCell>{bet.price / 1e18}</TableCell>
                     <TableCell>{bet.teamName.toString()}</TableCell>
                     <TableCell>{bet.status}</TableCell>
                     <TableCell>

@@ -57,18 +57,26 @@ const PublishBet: React.FC = () => {
   });
 
   useEffect(() => {
-    console.log(GameID)
-    setCurrentGame(GameID.toNumber())
+    try{
+      console.log(GameID)
+      setCurrentGame(GameID.toNumber())
+    } catch(err) {
+      console.log("Error: ", err)
+    }
   }, []);
 
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch(
-        'https://api.sportsdata.io/v3/nba/scores/json/Games/2023?key=76c2b56ace2845c59e84f30b8a88ad36'
-      );
-      const result = await response.json();
-      setData(result);
+      try {
+        const response = await fetch(
+          'https://api.sportsdata.io/v3/nba/scores/json/Games/2023?key=76c2b56ace2845c59e84f30b8a88ad36'
+        );
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
     fetchData();
   }, []);
@@ -98,9 +106,15 @@ const PublishBet: React.FC = () => {
    
     console.log(_teamId, typeof(_teamId))
     let priceToWei = ethers.utils.parseEther(price);
-    let contract = new ethers.Contract(ContractAddress, abi, signer)
-    let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, condition, {value: priceToWei})
-    console.log(tx)
+    try {
+      let contract = new ethers.Contract(ContractAddress, abi, signer)
+      let tx = contract.publishBet(priceToWei, parseInt(gameId), homeTeam, awayTeam, dataTime, _teamId, condition, {value: priceToWei})
+      console.log(tx)
+    }catch (err) {
+      console.error('Error in publish bet:', err);
+    }
+
+    
     
   };
 
