@@ -1,16 +1,16 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useAccount, useConnect, useContractRead, useSigner  } from 'wagmi'
 import { useState, useEffect } from 'react';
+import { BigNumber } from 'ethers';
 const {abi} = require('../abi.json')
 
 
 
-export default function MainPage(): JSX.Element {
+const MainPage: React.FC = () => {
 
-  const [AllBets, setAllBet] = useState('')
-  const [availableBets, setavailableBet] = useState('')
+  const [AllBets, setAllBet] = useState<BigNumber>()
+  const [availableBets, setavailableBet] = useState<BigNumber>()
   const { data: signer, isError, isLoading } = useSigner()
   const ContractAddress = "0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2"
 
@@ -38,22 +38,22 @@ export default function MainPage(): JSX.Element {
 
   useEffect(() => {
     try{
-		setAllBet(AllOfBets as string)
+		setAllBet(AllOfBets as BigNumber)
 
     } catch(err){
       console.log('Error:', err)
     } 
     
-	}, []);
+	}, [AllOfBets]);
 
   useEffect(() => {
     try{
-		  setavailableBet(AvailableBets as string)
+		  setavailableBet(AvailableBets as BigNumber)
   
       } catch(err){
         console.log('Error:', err)
       } 
-	}, []);
+	}, [AvailableBets]);
 
 
     return(
@@ -88,7 +88,7 @@ export default function MainPage(): JSX.Element {
             <a className={styles.card}>
               <h2>Available Bets &rarr;</h2>
               <h1>
-                {availableBets}
+                {availableBets?.toString()}
               </h1>
             </a>
   
@@ -96,7 +96,7 @@ export default function MainPage(): JSX.Element {
             <a className={styles.card}>
               <h2>All Of Bets &rarr;</h2>
               <h1>
-                {AllBets}
+                {AllBets?.toString()}
               </h1>
             </a>
 
@@ -105,7 +105,7 @@ export default function MainPage(): JSX.Element {
   
         <footer className={styles.footer}>
           <a target="_blank" rel="noopener noreferrer">
-            Made with ❤️ by devs at Aryan Institue 
+            Made with ❤️ by devs at Aryan Institute 
           </a>
         </footer>
 
@@ -114,3 +114,5 @@ export default function MainPage(): JSX.Element {
     );
 
 };
+
+export default MainPage;
