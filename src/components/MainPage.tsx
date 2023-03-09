@@ -74,12 +74,12 @@ const MainPage: React.FC = () => {
           
   
           <div className={styles.grid}>
-            <a href="https://rainbowkit.com" className={styles.card}>
+            <a href="https://mumbai.polygonscan.com/address/0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2" className={styles.card}>
               <h2>Smart Contract &rarr;</h2>
               <p>See the Smart Contract on PolygonScan.</p>
             </a>
   
-            <a href="https://wagmi.sh" className={styles.card}>
+            <a href="#" className={styles.card}>
               <h2>Matching Guide &rarr;</h2>
               <p>Learn how to interact with the Bet Dapp.</p>
             </a>
