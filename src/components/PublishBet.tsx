@@ -84,7 +84,7 @@ const PublishBet: React.FC = () => {
   const handleClick = (gameId: number, homeTeam: string, awayTeam: string, dataTime: string, homeId: number, awayId: number) => {
 
     let _teamId;
-    let price = prompt('Enter the price:');
+    let price = prompt('Enter Your Bet (Matic):');
     if (!price || isNaN(parseFloat(price))) {
       alert("Invalid price input");
       return;
