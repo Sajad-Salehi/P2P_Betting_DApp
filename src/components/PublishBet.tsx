@@ -136,7 +136,7 @@ const PublishBet: React.FC = () => {
           {data
             .sort((a, b) => a.GameID - b.GameID)
             .filter(row => currentId && row.GameID > currentId)
-            .slice(10, 30)
+            .slice(16, 30)
             .map(row => (
               <TableRow key={row.GameID}>
                 <TableCell component="th" scope="row">
