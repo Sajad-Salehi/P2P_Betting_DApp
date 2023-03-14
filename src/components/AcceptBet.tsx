@@ -112,7 +112,7 @@ const GameTable: React.FC = ({  }) => {
                   <TableCell align="right">{row.HomeTeam}</TableCell>
                   <TableCell align="right">{row.AwayTeam}</TableCell>
                   <TableCell align="right">{row.gameId.toNumber()}</TableCell>
-                  <TableCell align="right">{(row.price / 1e18).toString()}</TableCell>
+                  <TableCell align="right">{parseInt(row.price.toString()) / 1e18}</TableCell>
                   <TableCell align="right">{row.DateTime}</TableCell>
                   <TableCell align="right">{row.teamName.toString()}</TableCell>
                   <TableCell align="right">
