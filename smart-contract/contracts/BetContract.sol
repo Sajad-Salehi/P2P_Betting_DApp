@@ -2,23 +2,23 @@
 pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-contract BetContract is ChainlinkClient {
+
+contract BetContract is ChainlinkClient, ReentrancyGuard {
 
     
-    uint256 public winning;         // latest match wining result
-    uint256 public losing;          // latest match losing result
-    uint256 public currentTeamId;   // latest match team id
-    uint256 public currentGameId;   // latest match gameId   
-    uint256 public betCounter;      // number of all bets
-
+    uint256 private winning;                        // latest match wining result
+    uint256 private losing;                         // latest match losing result
+    uint256 private currentTeamId;                  // latest match team id
+    uint256 public currentGameId;                   // latest match gameId   
+    uint256 public betCounter;                      // number of all bets
     bytes32 private externalJobId;
     uint256 private oraclePayment;
     using Chainlink for Chainlink.Request;
-
-    mapping (uint => Bet) public bets; // bet id to bet struct
-    mapping (address => uint[]) AddressToBetId; // mapping from each user address to list of user bets id
+    mapping (uint => Bet) public bets;              // bet id to bet struct
+    mapping (address => uint[]) AddressToBetId;     // mapping from each user address to list of user bets id
 
 
 
@@ -35,7 +35,7 @@ contract BetContract is ChainlinkClient {
         address challenger;
         address accepter;
         address winner;
-        bool isAlive;
+        bool isActive;
         bool isAccepted;
         string status;
     }
@@ -50,16 +50,14 @@ contract BetContract is ChainlinkClient {
         uint256 teamId
     );
 
-
-
-    event LogPublishBet(
+    event BetPublished(
 
         uint indexed _id,
         address indexed _challenger,
         uint256 indexed _price
     ); 
 
-    event LogAcceptBet(
+    event BetAccepted(
 
         uint indexed _id,
         address indexed _challenger,
@@ -67,19 +65,15 @@ contract BetContract is ChainlinkClient {
         uint256  _price
     );
 
-    event LogResolveBet(
+    event BetClosed(
 
         uint indexed _id,
-        address indexed _challenger,
-        address indexed _accepter,
-        uint256 _payout
+        uint indexed amount,
+        address indexed _winner
+        
     );
 
-    event logNumber (
-        uint number1,
-        uint number2
-    );
-
+ 
 
     constructor() {
         
@@ -90,8 +84,9 @@ contract BetContract is ChainlinkClient {
 
     } 
 
+
     // request to oracle and get the latest match result from the api
-    function requestMultiVariable() public {
+    function requestMultiVariable() internal {
 
         Chainlink.Request memory req = buildChainlinkRequest(externalJobId, address(this), this.fulfillBytesAndUint.selector);
         req.add("get", "https://api.sportsdata.io/v3/nba/scores/json/TeamGameStatsBySeason/2023/11/1?key=76c2b56ace2845c59e84f30b8a88ad36");
@@ -115,9 +110,8 @@ contract BetContract is ChainlinkClient {
     }
  
     
-    // find winners and then close bets
-    // this function uses chainlink upkeep
-    function upkeep_setWinner() public {
+    // find winners and then close bets. this function uses chainlink upkeep
+    function upkeep_setWinner() public nonReentrant {
 
         requestMultiVariable();
 
@@ -129,7 +123,6 @@ contract BetContract is ChainlinkClient {
                     close_bet(i, bets[i].challenger);
 
                 }
-
                 else if(currentTeamId != bets[i].teamId){
                     close_bet(i, bets[i].accepter);
 
@@ -139,26 +132,26 @@ contract BetContract is ChainlinkClient {
     }
 
 
-    // send reward for winner and close bet
-    function close_bet(uint id, address _to) internal  {
 
-        if (bets[id].isAlive == false || bets[id].isAccepted == false) {
-            return;
-        }
+    // send reward for winner and close bet
+    function close_bet(uint id, address _to) internal nonReentrant {
         
+        require(bets[id].isActive == true, "Bet is not Active");
+        require(bets[id].isAccepted == true, "Bet is not Accepted");
+
         bets[id].winner = _to;
         bets[id].status = "Closed";
-        bets[id].isAlive = false;
+        bets[id].isActive = false;
         
         uint256 amount = bets[id].price * 2;
         address payable to = payable(_to);
 
-        bool isSuccess = to.send(amount);
-        require(isSuccess, "Transaction Failed");
-
+        to.transfer(amount);
+        emit BetClosed(id, amount, to);
 
     }
     
+
 
     // Publish a new bet 
     function publishBet( 
@@ -188,8 +181,9 @@ contract BetContract is ChainlinkClient {
         );
 
         AddressToBetId[msg.sender].push(betCounter);
-        emit LogPublishBet(betCounter, msg.sender, _price);
+        emit BetPublished(betCounter, msg.sender, _price);
     }
+
 
 
     // accept the specific Bet 
@@ -199,7 +193,7 @@ contract BetContract is ChainlinkClient {
         
         // the bet sould alive and not closed or accepted before
         // accepter should send the bet price as msg.value
-        require(bet.isAlive == true, "The bet was canceled");
+        require(bet.isActive == true, "The bet is not activa");
         require(betCounter > 0, "Bet is not published");
         require(_id > 0 && _id <= betCounter, "Bet is not published");
         require(msg.sender != bet.challenger, "Challenger can not accept the bet");
@@ -208,11 +202,13 @@ contract BetContract is ChainlinkClient {
         bet.accepter = msg.sender;
         bet.isAccepted = true;
         bet.status = "Accepted";
-        AddressToBetId[msg.sender].push(betCounter);
+        AddressToBetId[msg.sender].push(_id);
 
-        emit LogAcceptBet(_id, bet.challenger, bet.accepter, bet.price);
+        emit BetAccepted(_id, bet.challenger, bet.accepter, bet.price);
 
     } 
+
+
 
     // cancel bet from challenger before accept bet
     function cancelBet(uint _id) public payable {
@@ -220,11 +216,11 @@ contract BetContract is ChainlinkClient {
         Bet storage bet = bets[_id];
 
         // msg.sender should be challenger
-        require(bet.isAlive == true, "The bet was canceled");
+        require(bet.isActive == true, "The bet was canceled");
         require(betCounter >= _id && _id > 0, "Bet is not published");
         require(msg.sender == bet.challenger, "Bet challenger can cancel");
 
-        bet.isAlive = false;
+        bet.isActive = false;
         bet.status = "Canceled";
         uint256 amount = bet.price;
         address payable to = payable(bet.challenger);
@@ -235,10 +231,13 @@ contract BetContract is ChainlinkClient {
         
     }
 
+
+
     // return number of all of bets in the contract
     function getNumberOfBets() public view returns (uint) {
         return betCounter;
     }
+
 
 
     // return number of available Bets
@@ -248,13 +247,14 @@ contract BetContract is ChainlinkClient {
 
         for(uint i = 1; i <=  betCounter ; i++){
 
-            if(bets[i].isAccepted == false && bets[i].isAlive == true) {
+            if(bets[i].isAccepted == false && bets[i].isActive == true) {
                 numberOfAvailableBets++;
             }
         }
 
         return numberOfAvailableBets;
     }
+
 
 
     // create the list of available Bets and return it
@@ -266,7 +266,7 @@ contract BetContract is ChainlinkClient {
         for(uint i = 1; i <=  betCounter ; i++){
 
             // Keep the ID if the bet is still available
-            if(bets[i].isAccepted == false && bets[i].isAlive == true) {
+            if(bets[i].isAccepted == false && bets[i].isActive == true) {
 
                 betIds[numberOfAvailableBets] = bets[i].id;
                 numberOfAvailableBets++;
@@ -283,6 +283,8 @@ contract BetContract is ChainlinkClient {
         return availableBets; 
     }   
 
+
+
     // returns the list of msg.seder bets
     function getUserBets() public view returns(Bet[] memory) {
 
@@ -297,6 +299,7 @@ contract BetContract is ChainlinkClient {
 
         return userBets;
     }
+
 
 
     // set and return the winner condition team for accepter
@@ -316,7 +319,4 @@ contract BetContract is ChainlinkClient {
         }
 
     }
-
-
-
 }
