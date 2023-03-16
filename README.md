@@ -23,11 +23,11 @@ To use Bet DApp, follow these steps:
 
 
 ## Smart Contract Architecture
-BetMate utilizes a Solidity smart contract that handles the logic for the betting system. The contract uses the Chainlink oracle to fetch the latest match results from the API and determine the winner. Users can place a bet by providing relevant information such as the bet price, game ID, home team name, away team name, date time, team ID, and team name. Once a bet is accepted, the contract locks the funds and transfers them to the smart contract. If the user who placed the bet wins, the contract sends the reward to the winner and closes the bet. Similarly, if the user who accepted the bet wins, the contract sends the reward to the accepter and closes the bet.<br/><br/>
+This Bet DApp utilizes a Solidity smart contract that handles the logic for the betting system. The contract uses the Chainlink oracle to fetch the latest match results from the API and determine the winner. Users can place a bet by providing relevant information such as the bet price, game ID, home team name, away team name, date time, team ID, and team name. Once a bet is accepted, the contract locks the funds and transfers them to the smart contract. If the user who placed the bet wins, the contract sends the reward to the winner and closes the bet. Similarly, if the user who accepted the bet wins, the contract sends the reward to the accepter and closes the bet.<br/><br/>
 
 
 ## Deployment
-To deploy BetMate to the Ethereum network, you can use Brownie's deployment tools. Simply run the following command in the terminal:
+To deploy Bet contract, you can use Brownie's deployment tools. Simply run the following command in the terminal:
 
 ```bash
 brownie run scripts/deploy.py --network ethereum_network
