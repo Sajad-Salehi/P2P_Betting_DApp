@@ -40,7 +40,7 @@ const PublishBet: React.FC = () => {
   const [data, setData] = useState<Data[]>([]);
   const [currentId, setCurrentGame] = useState<number>();
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0xF1B54387041B54f288e4aa0538aFaA594FA0F1e6"
+  const ContractAddress = "0x27b63A915066610512CDD8748d00FCB25407Bf29"
 
 
 
