@@ -74,7 +74,7 @@ const MainPage: React.FC = () => {
           
   
           <div className={styles.grid}>
-            <a href="https://mumbai.polygonscan.com/address/0x436925b7ECaf17818CcE9ef9F715D54B9B917aC2" className={styles.card}>
+            <a href="https://mumbai.polygonscan.com/address/0x27b63A915066610512CDD8748d00FCB25407Bf29" className={styles.card}>
               <h2>Smart Contract &rarr;</h2>
               <p>See the Smart Contract on PolygonScan.</p>
             </a>
