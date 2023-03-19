@@ -111,9 +111,10 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
  
     
     // find winners and then close bets. this function uses chainlink upkeep
-    function upkeep_setWinner() public nonReentrant {
+    function upkeep_setWinner() public payable nonReentrant {
 
         requestMultiVariable();
+
 
         for(uint i = 1; i <= betCounter; i++){
         
@@ -134,7 +135,7 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
 
 
     // send reward for winner and close bet
-    function close_bet(uint id, address _to) internal nonReentrant {
+    function close_bet(uint id, address _to) internal  {
         
         require(bets[id].isActive == true, "Bet is not Active");
         require(bets[id].isAccepted == true, "Bet is not Accepted");
@@ -187,7 +188,7 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
 
 
     // accept the specific Bet 
-    function acceptBet(uint _id ) public payable {
+    function acceptBet(uint _id ) public payable nonReentrant {
 
         Bet storage bet = bets[_id];
         
@@ -319,4 +320,7 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
         }
 
     }
+
+
+
 }
