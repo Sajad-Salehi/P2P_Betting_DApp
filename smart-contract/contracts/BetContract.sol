@@ -5,7 +5,6 @@ import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-
 contract BetContract is ChainlinkClient, ReentrancyGuard {
 
     
@@ -17,9 +16,11 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
     bytes32 private externalJobId;
     uint256 private oraclePayment;
     using Chainlink for Chainlink.Request;
+
+
     mapping (uint => Bet) public bets;              // bet id to bet struct
     mapping (address => uint[]) AddressToBetId;     // mapping from each user address to list of user bets id
-
+    mapping (uint256 => uint[]) GameIdToBets;          
 
 
     struct Bet {
@@ -113,45 +114,53 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
     // find winners and then close bets. this function uses chainlink upkeep
     function upkeep_setWinner() public payable nonReentrant {
 
-        requestMultiVariable();
+
+        uint256[] memory _betsID = GameIdToBets[currentGameId];
+        uint256 length = _betsID.length;
 
 
-        for(uint i = 1; i <= betCounter; i++){
-        
-            if (bets[i].gameId == currentGameId) {
+        for(uint i = 0; i < length; i++){
+            
+            uint256 id = _betsID[i];
+            if (bets[id].isActive == true) {
 
-                if (currentTeamId == bets[i].teamId){
-                    close_bet(i, bets[i].challenger);
+                if (currentTeamId == bets[id].teamId){
+                    
+                    address _to = bets[id].challenger;
+                    bets[id].winner = _to;
+                    bets[id].status = "Closed";
+                    bets[id].isActive = false;
+                    
+                    uint256 amount = bets[id].price * 2;
+                    address payable to = payable(_to);
+
+                    to.transfer(amount);
+                    emit BetClosed(id, amount, to);
+
+
 
                 }
-                else if(currentTeamId != bets[i].teamId){
-                    close_bet(i, bets[i].accepter);
+
+                else if(currentTeamId != bets[id].teamId){
+                    
+                    address _to = bets[id].accepter;
+                    bets[id].winner = _to;
+                    bets[id].status = "Closed";
+                    bets[id].isActive = false;
+                    
+                    uint256 amount = bets[id].price * 2;
+                    address payable to = payable(_to);
+
+                    to.transfer(amount);
+                    emit BetClosed(id, amount, to);
+
 
                 }
             }
         } 
+
+        requestMultiVariable();
     }
-
-
-
-    // send reward for winner and close bet
-    function close_bet(uint id, address _to) internal  {
-        
-        require(bets[id].isActive == true, "Bet is not Active");
-        require(bets[id].isAccepted == true, "Bet is not Accepted");
-
-        bets[id].winner = _to;
-        bets[id].status = "Closed";
-        bets[id].isActive = false;
-        
-        uint256 amount = bets[id].price * 2;
-        address payable to = payable(_to);
-
-        to.transfer(amount);
-        emit BetClosed(id, amount, to);
-
-    }
-    
 
 
     // Publish a new bet 
@@ -204,6 +213,7 @@ contract BetContract is ChainlinkClient, ReentrancyGuard {
         bet.isAccepted = true;
         bet.status = "Accepted";
         AddressToBetId[msg.sender].push(_id);
+        GameIdToBets[bet.gameId].push(_id);
 
         emit BetAccepted(_id, bet.challenger, bet.accepter, bet.price);
 
