@@ -43,7 +43,7 @@ const MyBets: React.FC = () => {
   const [bets, setBets] = useState<Bet[]>([]);
   const [betId, setBetId] = useState('');
   const { data: signer, isError: signerError, isLoading: signerLoading } = useSigner();
-  const ContractAddress = '0xF803daD617584A498bc1172f9502BA6867Ad0093';
+  const ContractAddress = '0x67206ddFf1B347aBdFa02eC3B703145930344977';
 
   const handleClick = async (gameId: number) => {
     try {
