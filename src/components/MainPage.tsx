@@ -12,7 +12,7 @@ const MainPage: React.FC = () => {
   const [AllBets, setAllBet] = useState<BigNumber>()
   const [availableBets, setavailableBet] = useState<BigNumber>()
   const { data: signer, isError, isLoading } = useSigner()
-  const ContractAddress = "0xF803daD617584A498bc1172f9502BA6867Ad0093"
+  const ContractAddress = "0x67206ddFf1B347aBdFa02eC3B703145930344977"
 
 
   const contractConfig = {
