@@ -42,5 +42,12 @@ Replace ethereum_network with the name of the Ethereum network you wish to deplo
 Contributions to this project are always welcome! If you find any bugs or want to add a new feature, feel free to create an issue or pull request.
 
 
+## Collaborators
+- [Farzad Aryan](https://github.com/faryann)<br />
+- [Kasra Sohrabati](https://github.com/kasrasohrabati)<br />
+- [Sajad Salehi](https://github.com/Sajad-Salehi)<br />
+
+
+
 ## License
 This project is licensed under the [MIT license](LICENSE).
